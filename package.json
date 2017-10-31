@@ -1,0 +1,24 @@
+{
+    "name": "NodeMindwave",
+    "version": "1.0.0",
+    "author": {
+        "email": "jimmy@alchemytech.com.tw",
+        "name": "Jimmy"
+    },
+    "dependencies": {
+        "buffy": "0.0.5",
+        "serialport": "^4.0.1"
+    },
+    "description": "A cross-platform driver for Neurosky Mindwave Mobile",
+    "keywords": [
+        "brainwave",
+        "mindwave",
+        "neurosky"
+    ],
+    "license": "MIT",
+    "main": "index.js",
+    "devDependencies": {
+        "fft-js": "0.0.9",
+        "kefir": "^3.3.0"
+    }
+}
