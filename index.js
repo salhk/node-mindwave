@@ -11,7 +11,7 @@ Mindwave.prototype.__proto__ = EventEmitter.prototype
 
 Mindwave.prototype.connect = function (port, baud) {
     if (!baud) {
-        baud = 9600
+        baud = 57600
     }
     var self = this
     if (baud !== 9600 && baud !== 57600) {
@@ -22,17 +22,35 @@ Mindwave.prototype.connect = function (port, baud) {
 
     // TODO: switch baud code if 57600 for higher res data
     // http://developer.neurosky.com/docs/doku.php?id=thinkgear_communications_protocol#thinkgear_command_bytes
+    SerialPort.list()
+    .then((ports) => {
+        for (var i = 0; i < ports.length; i++) {
+            let port = ports[i];
+            let sp = new SerialPort(port.comName, {
+                baudRate: self.baud,
+                autoOpen: false
+            })
+            sp.open(function (err) {
+                if (err) {
+                    console.log(err);
+                    return;
+                }
+                console.log(port.comName);
+                self.port = port.comName;
+                self.serialPort = sp;
+                self.emit('connect')
+                self.serialPort.on('data', function (data) {
+                    self.emit(self.parse(data))
+                })
+            })
+        }
+    })
+    .catch((err) => {
 
-    self.serialPort = new SerialPort(self.port, {
-        baudRate: self.baud,
-        autoOpen: false
-    })
-    self.serialPort.open(function () {
-        self.emit('connect')
-        self.serialPort.on('data', function (data) {
-            self.emit(self.parse(data))
-        })
-    })
+    });
+    return;
+
+    
 }
 
 Mindwave.prototype.disconnect = function () {

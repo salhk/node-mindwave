@@ -35,6 +35,7 @@ var outS = kefir.zip([
 
 console.log('connecting')
 //mw.connect('/dev/cu.MindWaveMobile-DevA');
-mw.connect('/dev/cu.MindWaveMobile-SerialPo', 57600);
+//mw.connect('/dev/cu.MindWaveMobile-SerialPo', 57600);
+mw.connect('', 57600);
 
 outS.log()
