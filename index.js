@@ -125,11 +125,11 @@ Mindwave.prototype.parseEEG = function (data) {
     return {
         'delta': this.parse3ByteInteger(data.slice(0, 2)),
         'theta': this.parse3ByteInteger(data.slice(3, 5)),
-        'loAlpha': this.parse3ByteInteger(data.slice(6, 8)),
-        'hiAlpha': this.parse3ByteInteger(data.slice(9, 11)),
-        'loBeta': this.parse3ByteInteger(data.slice(12, 14)),
-        'hiBeta': this.parse3ByteInteger(data.slice(15, 17)),
-        'loGamma': this.parse3ByteInteger(data.slice(18, 20)),
+        'lowAlpha': this.parse3ByteInteger(data.slice(6, 8)),
+        'highAlpha': this.parse3ByteInteger(data.slice(9, 11)),
+        'lowBeta': this.parse3ByteInteger(data.slice(12, 14)),
+        'highBeta': this.parse3ByteInteger(data.slice(15, 17)),
+        'lowGamma': this.parse3ByteInteger(data.slice(18, 20)),
         'midGamma': this.parse3ByteInteger(data.slice(21, 24))
     }
 }
