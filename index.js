@@ -22,6 +22,10 @@ Mindwave.prototype.connect = function (port, baud) {
 
     // TODO: switch baud code if 57600 for higher res data
     // http://developer.neurosky.com/docs/doku.php?id=thinkgear_communications_protocol#thinkgear_command_bytes
+    if (self.serialPort != undefined) {
+        self.serialPort.pause();
+        self.serialPort.close();
+    }
     SerialPort.list()
     .then((ports) => {
         for (var i = 0; i < ports.length; i++) {
@@ -36,11 +40,19 @@ Mindwave.prototype.connect = function (port, baud) {
                     return;
                 }
                 console.log(port.comName);
+                  
                 self.port = port.comName;
                 self.serialPort = sp;
                 self.emit('connect')
                 self.serialPort.on('data', function (data) {
                     self.emit(self.parse(data))
+                })
+                self.serialPort.on('error', function(err) {
+                    console.log('Error: ', err.message);
+                })
+                self.serialPort.on('close', function(err) {
+                    console.log('disconnected');
+                    self.emit('disconnect')
                 })
             })
         }
@@ -48,9 +60,8 @@ Mindwave.prototype.connect = function (port, baud) {
     .catch((err) => {
 
     });
+    self.emit('disconnect')
     return;
-
-    
 }
 
 Mindwave.prototype.disconnect = function () {
