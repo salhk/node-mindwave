@@ -79,12 +79,20 @@ Mindwave.prototype.parse = function (data) {
     while (reader.bytesAhead() > 2) {
         if (reader.uint8() === BT_SYNC && reader.uint8() === BT_SYNC) {
             var len = reader.uint8()
-            if (len > 170)
-                return
-            if (len === BT_SYNC)
-                break
+            if (len >= 170)
+                continue
+            
             var payload = reader.buffer(len)
-            this.parsePacket(payload)
+            var sum = 0;
+            for (var i = 0; i < len; i++) {
+                sum += payload[i];
+            }
+            var checksum = reader.uint8();
+            sum = sum & 0xFF;
+            sum = ~sum & 0xFF;
+            if (checksum == sum) {
+                this.parsePacket(payload, len);
+            }
         }
     }
 }
@@ -92,43 +100,48 @@ Mindwave.prototype.parse = function (data) {
 // TODO: add more
 // http://developer.neurosky.com/docs/doku.php?id=thinkgear_communications_protocol#data_payload_structure
 
-Mindwave.prototype.parsePacket = function (data) {
+Mindwave.prototype.parsePacket = function (data, length) {
     var reader = buffy.createReader(data)
-    while (reader.bytesAhead() > 0) {
-        switch (reader.uint8()) {
-            case CODE_EX:
-                this.emit('extended')
-                break
-
-            case CODE_HEART:
-                this.emit('heart', reader.uint8())
-                break
-
+    var bytesParsed = 0;
+    while (bytesParsed < length) {
+        var excodeLevel = 0;
+        var codeLength = 0;
+        var code = reader.uint8();
+        bytesParsed++;
+        while (code == CODE_EX) {
+            this.emit('extended');
+            code = reader.uint8();
+            excodeLevel++;
+            bytesParsed++;
+        }
+        if (code >= 0x80) {
+            codeLength = reader.uint8();
+            bytesParsed++;
+        }
+        else {
+            codeLength = 1;
+        }
+        switch(code) {
+            case CODE_RAW_WAVE:
+                this.emit('raw', reader.int16BE());
+                break;
             case CODE_SIGNAL_QUALITY:
-                this.emit('signal', reader.uint8())
-                break
-
-            case CODE_ATTENTION:
-                this.emit('attention', reader.uint8())
-                break
-
-            case CODE_MEDITATION:
-                this.emit('meditation', reader.uint8())
-                break
-
-            case CODE_BLINK:
-                this.emit('blink', reader.uint8())
-                break
-
-            case CODE_WAVE:
-                reader.skip(1)
-                this.emit('wave', reader.int16BE())
-                break
-
+                this.emit('signal', reader.uint8());
+                break;
             case CODE_ASIC_EEG:
                 this.emit('eeg', this.parseEEG(reader.buffer(24)))
-                break
+                break;
+            case CODE_ATTENTION:
+                this.emit('attention', reader.uint8());
+                break;
+            case CODE_MEDITATION:
+                this.emit('meditation', reader.uint8());
+                break;
+            case CODE_BLINK:
+                this.emit('blink', reader.uint8())
+                break;
         }
+        bytesParsed += codeLength;
     }
 }
 
@@ -154,10 +167,22 @@ Mindwave.prototype.parse3ByteInteger = function (data) {
 
 var BT_SYNC = 0xAA
 var CODE_EX = 0x55 // Extended code
+var CODE_BATTERY = 0x01; // battery level
 var CODE_SIGNAL_QUALITY = 0x02 // POOR_SIGNAL quality 0-255
 var CODE_HEART = 0x03 // HEART_RATE 0-255
 var CODE_ATTENTION = 0x04 // ATTENTION eSense 0-100
 var CODE_MEDITATION = 0x05 // MEDITATION eSense 0-100
+var CODE_RAW_WAVE_8BIT = 0x06; // 8BIT_RAW Wave Value (0-255)
+var CODE_RAW_MARKER = 0x07; // RAW_MARKER Section Start (0)
 var CODE_BLINK = 0x16 // BLINK strength 0-255
-var CODE_WAVE = 0x80 // RAW wave value: 2-byte big-endian 2s-complement
+var CODE_RAW_WAVE = 0x80 // RAW wave value: 2-byte big-endian 2s-complement
+var CODE_EEG_POWER = 0x81; // EEG_POWER: eight big-endian 4-byte 
 var CODE_ASIC_EEG = 0x83 // ASIC EEG POWER 8 3-byte big-endian integers
+
+
+//mindwave packets
+var CODE_HEADSET_CONNECTED = 0xD0;
+var CODE_HEADSET_NOT_FOUND = 0xD1;
+var CODE_HEADSET_DISCONNECTED = 0xD2;
+var CODE_HEADSET_REQUEST_DENIED = 0xD3;
+var CODE_HEADSET_STANDBY_MODE = 0xD4;
