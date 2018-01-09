@@ -27,39 +27,39 @@ Mindwave.prototype.connect = function (port, baud) {
         self.serialPort.close();
     }
     SerialPort.list()
-    .then((ports) => {
-        for (var i = 0; i < ports.length; i++) {
-            let port = ports[i];
-            let sp = new SerialPort(port.comName, {
-                baudRate: self.baud,
-                autoOpen: false
-            })
-            sp.open(function (err) {
-                if (err) {
-                    console.log(err);
-                    return;
-                }
-                console.log(port.comName);
-                  
-                self.port = port.comName;
-                self.serialPort = sp;
-                self.emit('connect')
-                self.serialPort.on('data', function (data) {
-                    self.emit(self.parse(data))
+        .then((ports) => {
+            for (var i = 0; i < ports.length; i++) {
+                let port = ports[i];
+                let sp = new SerialPort(port.comName, {
+                    baudRate: self.baud,
+                    autoOpen: false
                 })
-                self.serialPort.on('error', function(err) {
-                    console.log('Error: ', err.message);
-                })
-                self.serialPort.on('close', function(err) {
-                    console.log('disconnected');
-                    self.emit('disconnect')
-                })
-            })
-        }
-    })
-    .catch((err) => {
+                sp.open(function (err) {
+                    if (err) {
+                        console.log(err);
+                        return;
+                    }
+                    console.log(port.comName);
 
-    });
+                    self.port = port.comName;
+                    self.serialPort = sp;
+                    self.emit('connect')
+                    self.serialPort.on('data', function (data) {
+                        self.emit(self.parse(data))
+                    })
+                    self.serialPort.on('error', function (err) {
+                        console.log('Error: ', err.message);
+                    })
+                    self.serialPort.on('close', function (err) {
+                        console.log('disconnected');
+                        self.emit('disconnect')
+                    })
+                })
+            }
+        })
+        .catch((err) => {
+
+        });
     self.emit('disconnect')
     return;
 }
@@ -81,7 +81,7 @@ Mindwave.prototype.parse = function (data) {
             var len = reader.uint8()
             if (len >= 170)
                 continue
-            
+
             var payload = reader.buffer(len)
             var sum = 0;
             for (var i = 0; i < len; i++) {
@@ -121,7 +121,7 @@ Mindwave.prototype.parsePacket = function (data, length) {
         else {
             codeLength = 1;
         }
-        switch(code) {
+        switch (code) {
             case CODE_RAW_WAVE:
                 this.emit('raw', reader.int16BE());
                 break;
@@ -139,6 +139,24 @@ Mindwave.prototype.parsePacket = function (data, length) {
                 break;
             case CODE_BLINK:
                 this.emit('blink', reader.uint8())
+                break;
+        }
+        
+        switch (code) {
+            case CODE_HEADSET_CONNECTED:
+                console.log('CODE_HEADSET_CONNECTED');
+                break;
+            case CODE_HEADSET_NOT_FOUND:
+                console.log('CODE_HEADSET_NOT_FOUND');
+                break;
+            case CODE_HEADSET_DISCONNECTED:
+                console.log('CODE_HEADSET_DISCONNECTED');
+                break;
+            case CODE_HEADSET_REQUEST_DENIED:
+                console.log('CODE_HEADSET_REQUEST_DENIED');
+                break;
+            case CODE_HEADSET_STANDBY_MODE:
+                console.log('CODE_HEADSET_STANDBY_MODE');
                 break;
         }
         bytesParsed += codeLength;
